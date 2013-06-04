@@ -500,3 +500,23 @@ function bmap_assoc_alter_form_submit($form, &$form_state) {
   $bmapAssoc->nid = $form_state['values']['nid'];
   bmap_assoc_save($bmapAssoc);
 }
+
+/**
+ * Implements hook_node_delete().
+ */
+function bmap_assoc_node_delete($node) {
+  $assoc_types_str = variable_get('bmap_assoc_types');
+  if (!empty($assoc_types_str)) {
+    $assoc_types = explode("\r\n", $assoc_types_str);
+    if (in_array($node->type, $assoc_types)) {
+      $query = new EntityFieldQuery();
+      $query->entityCondition('entity_type', 'bmap_assoc')
+            ->propertyCondition('nid', $node->nid);
+      $result = $query->execute();
+      if (isset($result['bmap_assoc'])) {
+        $ids = array_keys($result['bmap_assoc']);
+        bmap_assoc_delete_multiple($ids);
+      }
+    }
+  }
+}
