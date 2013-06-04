@@ -1,6 +1,13 @@
 <?php
 
 /**
+ * Implemenation of hook_install().
+ */
+function bmap_assoc_install() {
+  drupal_set_message(t('You need to <a href="/admin/config/user-interface/bmap_assoc">set assoc node types</a> .'));
+}
+
+/**
  * Implements hook_uninstall().
  */
 function bmap_assoc_uninstall() {

@@ -447,7 +447,9 @@ function bmap_assoc_form_alter(&$form, &$form_state, $form_id) {
   $assoc_types_str = variable_get('bmap_assoc_types');
   if (!empty($assoc_types_str)) {
     $assoc_types = explode("\r\n", $assoc_types_str);
-    if (isset($form['#node']->type) && in_array($form['#node']->type, $assoc_types)) {
+    $assoc_form_ids = $assoc_types;
+    array_walk($assoc_form_ids, function(&$val, $key) {$val .= '_node_form';});
+    if (isset($form['#node']->type) && in_array($form_id, $assoc_form_ids)) {
       $bmapAssoc = isset($form['#node']->nid) ? bmap_assoc_load_by_nid($form['#node']->nid) : entity_get_controller('bmap_assoc')->create();
       $bmap =  isset($bmapAssoc->bid) ? bmap_load($bmapAssoc->bid) : entity_get_controller('bmap')->create();
       $form['#bmap_assoc'] = $bmapAssoc;
