@@ -1,0 +1,13 @@
+name = Bmap Assoc
+description = Bmap associate module.
+core = 7.x
+package = LBS
+files[] = bmap_assoc.admin.inc
+files[] = bmap_assoc.info.inc
+files[] = bmap_assoc.module
+files[] = views/bmap_assoc.views.inc
+files[] = views/bmap_assoc_handler_link_field.inc
+files[] = views/bmap_assoc_handler_edit_link_field.inc
+files[] = views/bmap_assoc_handler_delete_link_field.inc
+files[] = views/bmap_assoc_handler_bmap_assoc_operations_field.inc
+dependencies[] = bmap

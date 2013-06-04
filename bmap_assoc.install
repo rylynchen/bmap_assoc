@@ -1,0 +1,54 @@
+<?php
+
+/**
+ * Implements hook_uninstall().
+ */
+function bmap_assoc_uninstall() {
+  variable_del('bmap_assoc_types');
+}
+
+/**
+ * Implemenation of hook_schema().
+ */
+function bmap_assoc_schema() {
+  $schema['bmap_assoc'] = array(
+    'description' => 'Maps bmap to node.',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique bmap node ID.',
+      ),
+      'bid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Primary Key: {bmap}.bid for bmap.',
+      ),
+      'nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Primary Key: {node}.nid for node.',
+      ),
+    ),
+    'primary key' => array('id'),
+    'indexes' => array(
+      'nid' => array('nid'),
+      'bid' => array('bid'),
+    ),
+    'foreign keys' => array(
+      'node' => array(
+        'table' => 'node',
+        'columns' => array('nid' => 'nid'),
+      ),
+      'bmap' => array(
+        'table' => 'bmap',
+        'columns' => array('bid' => 'bid'),
+      ),
+    ),
+  );
+  return $schema;
+}

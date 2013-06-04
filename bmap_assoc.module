@@ -1,0 +1,500 @@
+<?php
+
+/**
+ * Implements hook_menu().
+ */
+function bmap_assoc_menu() {
+  $items = array();
+  $items['admin/config/user-interface/bmap_assoc'] = array(
+    'title' => 'Bmap Assoc',
+    'description' => 'Bmap assoc settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('bmap_assoc_settings'),
+    'access arguments' => array('administer bmap assoc'),
+    'file' => 'bmap_assoc.admin.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/structure/bmap/assoc'] = array(
+    'title' => 'Assoc',
+    'description' => 'Manage Bmap Assoc',
+    'page callback' => 'bmap_assoc_manage',
+    'access arguments' => array('administer bmap assoc'),
+    'file' => 'bmap_assoc.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 0,
+  );
+  $items['bmap_assoc/add'] = array(
+    'title' => 'Add Bmap Assoc',
+    'page callback' => 'bmap_assoc_add',
+    'access arguments' => array('add bmap assoc'),
+    'file' => 'bmap_assoc.admin.inc',
+  );
+  $items['bmap_assoc/%bmap_assoc'] = array(
+    'title' => 'Bmap Assoc',
+    'page callback' => 'bmap_assoc_page_view',
+    'page arguments' => array(1),
+    'access arguments' => array('view bmap assoc'),
+    'file' => 'bmap_assoc.admin.inc',
+  );
+  $items['bmap_assoc/%bmap_assoc/view'] = array(
+    'title' => 'View',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  );
+  $items['bmap_assoc/%bmap_assoc/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'bmap_assoc_page_edit',
+    'page arguments' => array(1),
+    'access arguments' => array('edit bmap assoc'),
+    'weight' => 0,
+    'type' => MENU_LOCAL_TASK,
+    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+    'file' => 'bmap_assoc.admin.inc',
+  );
+  $items['bmap_assoc/%bmap_assoc/delete'] = array(
+    'title' => 'Delete',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('bmap_assoc_delete_confirm_form', 1),
+    'access arguments' => array('delete bmap assoc'),
+    'weight' => 1,
+    'type' => MENU_LOCAL_TASK,
+    'context' => MENU_CONTEXT_INLINE,
+    'file' => 'bmap_assoc.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function bmap_assoc_permission() {
+  return array(
+    'administer bmap assoc' => array(
+      'title' => t('Administer Bmap Assoc'),
+      'description' => t('Administer bmap assoc.'),
+    ),
+    'add bmap assoc' => array(
+      'title' => t('Add Bmap Assoc'),
+      'description' => t('Add entitiy bmaps assocs.'),
+    ),
+    'edit bmap assoc' => array(
+      'title' => t('Edit All Bmaps Assocs'),
+      'description' => t('Edit all entitiy bmaps assocs.'),
+    ),
+    'view bmap assoc' => array(
+      'title' => t('View All Bmaps Assocs'),
+      'description' => t('View entitiy bmaps assocs.'),
+    ),
+    'delete bmap assoc' => array(
+      'title' => t('Delete All Bmaps Assocs'),
+      'description' => t('Delete all entitiy bmaps assocs.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function bmap_assoc_entity_info() {
+  $return = array(
+    'bmap_assoc' => array(
+      'label' => t('Bmap Assoc'),
+      'plural label' => t('Bmaps Assocs'),
+      'description' => t('Bmap assoc entity.'),
+      'entity class' => 'bmapAssoc',
+      'controller class' => 'EntityAPIController',
+      'base table' => 'bmap_assoc',
+      'fieldable' => TRUE,
+      'view modes' => array(
+        'full' => array(
+          'label' => t('Bmap Assoc'),
+          'custom settings' => FALSE,
+        ),
+      ),
+      'entity keys' => array(
+        'id' => 'id',
+      ),
+      'bundles' => array(
+        'bmap_assoc' => array(
+          'label' => t('Bmap Assoc'),
+          'admin' => array(
+            'path' => 'admin/structure/bmap/assoc',
+            'access arguments' => array('administer bmap assoc'),
+          ),
+        ),
+      ),
+      'uri callback' => 'entity_class_uri',
+      'access callback' => 'bmap_assoc_access',
+      'module' => 'bmap_assoc',
+      'metadata controller class' => 'bmapAssocMetadataController'
+    ),
+  );
+  return $return;
+}
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ */
+function bmap_assoc_menu_local_tasks_alter(&$data, $router_item, $root_path) {
+  if ($root_path == 'admin/structure/bmap/assoc') {
+    $item = menu_get_item('bmap_assoc/add');
+    if ($item['access']) {
+      $data['actions']['output'][] = array(
+        '#theme' => 'menu_local_action',
+        '#link' => $item,
+      );
+    }
+  }
+}
+
+/**
+ * Implements hook_admin_paths().
+ */
+function bmap_assoc_admin_paths() {
+  if (variable_get('node_admin_theme')) {
+    $paths = array(
+      'bmap_assoc/add' => TRUE,
+      'bmap_assoc/*' => TRUE,
+      'bmap_assoc/*/edit' => TRUE,
+      'bmap_assoc/*/delete' => TRUE,
+    );
+    return $paths;
+  }
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function bmap_assoc_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'bmap_assoc') . '/views',
+  );
+}
+
+/**
+ * Determines whether the given user has access to a bmap assoc.
+ *
+ * @param $op
+ *   The operation being performed. One of 'view', 'update', 'create', 'delete'
+ *   or just 'edit' (being the same as 'create' or 'update').
+ * @param $bmapAssoc
+ *   Optionally to check access for. If nothing is given, access for
+ *   all bmaps is determined.
+ * @param $account
+ *   The user to check for. Leave it to NULL to check for the global user.
+ * @return boolean
+ *   Whether access is allowed or not.
+ */
+function bmap_assoc_access($op, $bmapAssoc = NULL, $account = NULL) {
+  if (user_access('administer bmap assoc', $account)) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Fetch a bmap assoc object.
+ *
+ * @param $id
+ *   Integer specifying the bmap assoc id.
+ * @param $reset
+ *   A boolean indicating that the internal cache should be reset.
+ * @return
+ *   A fully-loaded $bmapAssoc object or FALSE if it cannot be loaded.
+ *
+ * @see bmap_assoc_load_multiple()
+ */
+function bmap_assoc_load($id, $reset = FALSE) {
+  $bmapAssocs = bmap_assoc_load_multiple(array($id), array(), $reset);
+  return reset($bmapAssocs);
+}
+
+/**
+ * Fetch a bmap assoc object by node nid.
+ *
+ * @param $nid
+ *   Integer specifying the bmap assoc node nid.
+ *
+ * @see bmap_assoc_load_multiple()
+ */
+function bmap_assoc_load_by_nid($nid) {
+  $cache = &drupal_static(__FUNCTION__, array());
+  if (!isset($cache[$nid])) {
+    $bmapAssocs = bmap_assoc_load_multiple(FALSE, array('nid' => $nid));
+    $cache[$nid] = reset($bmapAssocs);
+    return $cache[$nid];
+  }
+  return $cache[$nid];
+}
+
+/**
+ * Load multiple bmaps assocs based on certain conditions.
+ *
+ * @param $ids
+ *   An array of bmap assoc IDs.
+ * @param $conditions
+ *   An array of conditions to match against the {bmap} table.
+ * @param $reset
+ *   A boolean indicating that the internal cache should be reset.
+ * @return
+ *   An array of bmap assoc objects, indexed by pid.
+ *
+ * @see entity_load()
+ * @see bmap_assoc_load()
+ */
+function bmap_assoc_load_multiple($ids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('bmap_assoc', $ids, $conditions, $reset);
+}
+
+/**
+ * Deletes a bmap assoc.
+ */
+function bmap_assoc_delete(bmapAssoc $bmapAssoc) {
+  $bmapAssoc->delete();
+}
+
+/**
+ * Delete multiple bmap assoc.
+ *
+ * @param $ids
+ *   An array of bmap assoc IDs.
+ */
+function bmap_assoc_delete_multiple(array $ids) {
+  entity_get_controller('bmap_assoc')->delete($ids);
+}
+
+/**
+ * Create a new bmap assoc object.
+ */
+function bmap_assoc_create(array $values) {
+  return new bmapAssoc($values);
+}
+
+/**
+ * Saves a bmap assoc to the database.
+ *
+ * @param $bmapAssoc
+ *   The bmap assoc object.
+ */
+function bmap_assoc_save(bmapAssoc $bmapAssoc) {
+  return $bmapAssoc->save();
+}
+
+/**
+ * The class used for bamp entities.
+ */
+class bmapAssoc extends Entity {
+
+  /**
+   * The bmap assoc id.
+   *
+   * @var integer
+   */
+  public $id;
+
+  /**
+   * The bmap assoc bid.
+   *
+   * @var integer
+   */
+  public $bid;
+
+  /**
+   * The bmap assoc nid.
+   *
+   * @var integer
+   */
+  public $nid;
+
+  public function __construct($values = array()) {
+    parent::__construct($values, 'bmap_assoc');
+  }
+
+  protected function defaultLabel() {
+    return $this->path;
+  }
+
+  protected function defaultUri() {
+    return array('path' => 'bmap_assoc/'.$this->id);
+  }
+
+  public function save() {
+    parent::save();
+    $cache = &drupal_static('bmap_assoc_load_by_nid', array());
+    if (isset($cache[$this->nid])) {
+      $cache[$this->nid] = $this;
+    }
+  }
+}
+
+/**
+ * The Controller for bmapAssoc entities
+ */
+class bmapAssocController extends EntityAPIController {
+  public function __construct($entityType) {
+    parent::__construct($entityType);
+  }
+
+  /**
+   * Create a bmap assoc - we first set up the values that are specific
+   * to our bmap_assoc schema but then also go through the EntityAPIController
+   * function.
+   * 
+   * @param $type
+   *   The machine-readable type of the bmap assoc.
+   *
+   * @return
+   *   A bmap assoc object with all default fields initialized.
+   */
+  public function create(array $values = array()) {
+    // Add values that are specific to our Bmap
+    $values += array(
+      'id' => '',
+    );
+    
+    $bmapAssoc = parent::create($values);
+    return $bmapAssoc;
+  }
+}
+
+/**
+ * The bmap assoc edit form.
+ */
+function bmap_assoc_form($form, &$form_state, $bmapAssoc) {
+  // Save the bmap assoc for later, incase we need it.
+  $form['#bmap_assoc'] = $bmapAssoc;
+  $form_state['bmap_assoc'] = $bmapAssoc;
+  $form['id'] = array(
+    '#type' => 'value',
+    '#value' => isset($bmapAssoc->id) ? $bmapAssoc->id : NULL,
+  );
+  $form['bid'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Bid'),
+    '#maxlength' => 60,
+    '#default_value' => !empty($bmapAssoc->bid) ? $bmapAssoc->bid : '',
+    '#weight' => -20,
+    '#required' => TRUE,
+  );
+  $form['nid'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Nid'),
+    '#maxlength' => 60,
+    '#default_value' => !empty($bmapAssoc->nid) ? $bmapAssoc->nid : '',
+    '#weight' => -10,
+    '#required' => TRUE,
+  );
+  $form['actions'] = array('#type' => 'actions');
+  $form['actions']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+    '#weight' => 40
+  );
+  if (!empty($bmapAssoc->id)) {
+    $form['actions']['delete'] = array(
+      '#type' => 'submit',
+      '#value' => t('Delete'),
+      '#weight' => 45,
+      '#limit_validation_errors' => array(),
+      '#submit' => array('bmap_assoc_form_submit_delete'),
+    );    
+  }
+  $form['#validate'][] = 'bmap_assoc_form_validate';
+  $form['#submit'][] = 'bmap_assoc_form_submit';
+  return $form;
+}
+
+/**
+ * Bmap assoc form validate handler.
+ */
+function bmap_assoc_form_validate($form, &$form_state) {
+  // Notify field widgets to validate their data.
+  if (!is_numeric($form_state['values']['bid'])) {
+    form_set_error('bid', t('Bid must be a number.'));
+  }
+  if (!is_numeric($form_state['values']['nid'])) {
+    form_set_error('nid', t('Nid must be a number.'));
+  }
+}
+
+/**
+ * Bmap assoc form submit handler.
+ */
+function bmap_assoc_form_submit($form, &$form_state) {
+  $bmapAssoc = &$form_state['bmap_assoc'];
+  $bmapAssoc->id = $form_state['values']['id'];
+  $bmapAssoc->bid = $form_state['values']['bid'];
+  $bmapAssoc->nid = $form_state['values']['nid'];
+  // Save the bmap
+  bmap_assoc_save($bmapAssoc);
+  drupal_set_message(t('Bmap assoc saved.'));
+  $form_state['redirect'] = 'bmap_assoc/'.$bmapAssoc->id;
+}
+
+/**
+ * Bmap assoc form submit handler for the delete button.
+ */
+function bmap_assoc_form_submit_delete($form, &$form_state) {
+  $bmapAssoc = $form_state['bmap_assoc'];
+  $form_state['redirect'] = 'bmap_assoc/'.$bmapAssoc->id.'/delete';
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function bmap_assoc_form_alter(&$form, &$form_state, $form_id) {
+  $assoc_types_str = variable_get('bmap_assoc_types');
+  if (!empty($assoc_types_str)) {
+    $assoc_types = explode("\r\n", $assoc_types_str);
+    if (isset($form['#node']->type) && in_array($form['#node']->type, $assoc_types)) {
+      $bmapAssoc = isset($form['#node']->nid) ? bmap_assoc_load_by_nid($form['#node']->nid) : entity_get_controller('bmap_assoc')->create();
+      $bmap =  isset($bmapAssoc->bid) ? bmap_load($bmapAssoc->bid) : entity_get_controller('bmap')->create();
+      $form['#bmap_assoc'] = $bmapAssoc;
+      $form_state['bmap_assoc'] = $bmapAssoc;
+      $form['#bmap'] = $bmap;
+      $form_state['bmap'] = $bmap;
+      $form['bmap'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Bmap'),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+      );
+      bmap_form_items($form['bmap'], $bmap);
+      field_attach_form('bmap', $bmap, $form['bmap'], $form_state);
+      $form['#validate'][] = 'bmap_assoc_alter_form_validate';
+      $form['actions']['submit']['#submit'][] = 'bmap_assoc_alter_form_submit';
+      bmap_form_attached($form, $bmap);
+    }
+  } 
+}
+
+/**
+ * Bmap form validate handler.
+ */
+function bmap_assoc_alter_form_validate($form, &$form_state) {
+  // Notify field widgets to validate their data.
+  if (!is_numeric($form_state['values']['bmap_x'])) {
+    form_set_error('bmap][bmap_x', t('X must be a number.'));
+  }
+  if (!is_numeric($form_state['values']['bmap_y'])) {
+    form_set_error('bmap][bmap_y', t('Y must be a number.'));
+  }
+}
+
+/**
+ * Bmap assoc alter form submit handler.
+ */
+function bmap_assoc_alter_form_submit($form, &$form_state) {
+  // save bmap
+  $bmap = &$form_state['bmap'];
+  $bmap->x = $form_state['values']['bmap_x'];
+  $bmap->y = $form_state['values']['bmap_y'];
+  field_attach_submit('bmap', $bmap, $form, $form_state);
+  bmap_save($bmap);
+  // save bmap assoc
+  $bmapAssoc = &$form_state['bmap_assoc'];
+  $bmapAssoc->bid = $bmap->bid;
+  $bmapAssoc->nid = $form_state['values']['nid'];
+  bmap_assoc_save($bmapAssoc);
+}
