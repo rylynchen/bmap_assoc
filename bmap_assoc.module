@@ -446,6 +446,8 @@ function bmap_assoc_form_submit_delete($form, &$form_state) {
 function bmap_assoc_form_alter(&$form, &$form_state, $form_id) {
   if (bmap_assoc_is_assoced_form($form_id)) {
     $bmapAssoc = isset($form['#node']->nid) ? bmap_assoc_load_by_nid($form['#node']->nid) : entity_get_controller('bmap_assoc')->create();
+    $bmapAssoc = isset($form['#node']->nid) ? bmap_assoc_load_by_nid($form['#node']->nid) : NULL;
+    $bmapAssoc = $bmapAssoc == NULL ? entity_get_controller('bmap_assoc')->create() : $bmapAssoc;
     $bmap =  isset($bmapAssoc->bid) ? bmap_load($bmapAssoc->bid) : entity_get_controller('bmap')->create();
     $form['#bmap_assoc'] = $bmapAssoc;
     $form_state['bmap_assoc'] = $bmapAssoc;
