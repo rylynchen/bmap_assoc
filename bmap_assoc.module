@@ -544,8 +544,12 @@ function bmap_assoc_is_assoced_node_type($type) {
 function bmap_assoc_is_assoced_form($form_id) {
   $assoc_types = bmap_assoc_get_assoc_node_types();
   if (!empty($assoc_types)) {
-    $assoc_form_ids = $assoc_types;
-    array_walk($assoc_form_ids, function(&$val, $key) {$val .= '_node_form';});
+    $assoc_form_ids = array();
+    // Anonymous functions are only available since 5.3, so give up this :
+    // array_walk($assoc_form_ids, function(&$val, $key) {$val .= '_node_form';});
+    foreach($assoc_types as $assoc_type) {
+      $assoc_form_ids[] = $assoc_type.'_node_form';
+    }
     return in_array($form_id, $assoc_form_ids);
   }
   return FALSE;
