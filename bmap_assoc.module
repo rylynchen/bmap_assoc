@@ -568,7 +568,7 @@ function bmap_assoc_node_view($node, $view_mode) {
         $bmap = bmap_load($bmapAssoc->bid);
         if ($bmap) {
           $node->content['bmap'] = array(
-            '#markup' => theme('bmap', array('bmap' => $bmap)),
+            '#markup' => theme('bmap_field_map', array('points' => array($bmap))),
             '#weight' => 100,
           );
         }
